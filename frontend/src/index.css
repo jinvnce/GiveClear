@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter Variable", Inter, system-ui, sans-serif;
+
+  --color-evergreen: #102f29;
+  --color-mint: #b8e8c9;
+  --color-paper: #f6f7f2;
+  --color-passed: #21634f;
+  --color-wait: #805600;
+  --color-attention: #a33134;
+  --color-info: #285ea7;
+
+  --text-hero: 2.5rem;
+  --text-hero--line-height: 3rem;
+  --text-page: 1.75rem;
+  --text-page--line-height: 2.125rem;
+  --text-section: 1.375rem;
+  --text-section--line-height: 1.75rem;
+  --text-cardh: 1.125rem;
+  --text-cardh--line-height: 1.5rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.25rem;
+}
+
+body {
+  @apply bg-paper font-sans text-body text-evergreen;
+}
+
+/* Visible keyboard focus on every control */
+:focus-visible {
+  outline: 3px solid var(--color-info);
+  outline-offset: 2px;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 text-body font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-primary {
+    @apply bg-evergreen text-white hover:bg-[#1b4a41];
+  }
+  .btn-secondary {
+    @apply border-2 border-evergreen bg-white text-evergreen hover:bg-mint;
+  }
+  .card {
+    @apply rounded-2xl bg-white p-4 ring-1 ring-evergreen/10 sm:p-6;
+  }
+  .field {
+    @apply min-h-12 w-full rounded-xl border-2 border-evergreen/70 bg-white px-3 text-body;
+  }
+  .label {
+    @apply mb-1 block text-small font-semibold;
+  }
+}
+
+/* Custom styled mobile scrollbar */
+.mobile-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(16, 47, 41, 0.35) transparent;
+}
+.mobile-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.mobile-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.mobile-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(16, 47, 41, 0.35);
+  border-radius: 9999px;
+}
+.mobile-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 47, 41, 0.65);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

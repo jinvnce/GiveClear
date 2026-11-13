@@ -1,0 +1,13 @@
+{
+  "name": "giveclear",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "node": "npm --prefix contracts run node",
+    "deploy:local": "npm --prefix contracts run deploy:local",
+    "deploy:testnet": "npm --prefix contracts run deploy"
+  }
+}
+
