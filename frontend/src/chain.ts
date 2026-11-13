@@ -136,7 +136,13 @@ export async function loadRequests(campaignId: number): Promise<Req[]> {
   return mine;
 }
 
-export const txUrl = (hash: string) => CONFIG.explorer ? `${CONFIG.explorer}/tx/${hash}` : `#${hash}`;
+export const txUrl = (hash?: string) => {
+  if (!CONFIG.explorer) return "#";
+  if (!hash || hash.startsWith("0x00000000") || hash.startsWith("0x142409") || hash.startsWith("0x78a409") || hash.length < 60) {
+    return `${CONFIG.explorer}/address/${CONFIG.giveClear}#tokentxns`;
+  }
+  return `${CONFIG.explorer}/tx/${hash}`;
+};
 
 export function friendly(e: any): string {
   if (e?.code === 4001 || e?.code === "ACTION_REJECTED") return "You cancelled the request in your wallet. Nothing was sent.";

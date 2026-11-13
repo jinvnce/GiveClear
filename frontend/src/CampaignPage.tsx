@@ -431,7 +431,7 @@ export function CampaignPage({
             id: (reqs?.length ?? 0) + 1,
             campaignId: campaign.id,
             amount: 250,
-            recipient: "0x0bb81d8B21F77a83B381A54F9154a1B37825d632", // Supplier wallet
+            recipient: "0x0bb810E033735085Dc72bC5387ECb5b3F875d632", // Supplier wallet
             purpose: "5 bags 5kg rice for family relief packs (Puregold)",
             status: 1,
             note: "Gemini 3.5 Flash verified receipt: Puregold Price Club. Total: ₱250.00 matches 5x 5kg rice bags.",

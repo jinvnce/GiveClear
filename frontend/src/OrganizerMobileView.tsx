@@ -86,7 +86,7 @@ export function OrganizerMobileView({
   const [organization, setOrganization] = useState(user?.organizationName || "Organa");
   const [goal, setGoal] = useState("40,000");
   const [organizerWallet, setOrganizerWallet] = useState(
-    wallet.account || "0x71C4a36f992800A2Bc0DeE780B6f1234a58929F8"
+    wallet.account || "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
   );
 
   // Receipt upload & audit state
@@ -127,7 +127,7 @@ export function OrganizerMobileView({
           campaignId: campaigns[0]?.id ?? 0,
           amount: 500,
           purpose: "5 bags 5kg rice and canned goods for relief packs",
-          recipient: "0x0bb81d8B21F77a83B381A54F9154a1B37825d632",
+          recipient: "0x0bb810E033735085Dc72bC5387ECb5b3F875d632",
           status: 1,
           merchant: "Batangas Grain & Groceries Depot",
           items: [
@@ -340,7 +340,7 @@ export function OrganizerMobileView({
       amount: d?.amount || 500,
       purpose: d?.purpose || "5 bags 5kg rice and canned goods for relief packs",
       recipientName: d?.merchant || "Batangas Grain & Groceries Depot",
-      recipientAddress: d?.recipient || "0x0bb81d8B21F77a83B381A54F9154a1B37825d632",
+      recipientAddress: d?.recipient || "0x0bb810E033735085Dc72bC5387ECb5b3F875d632",
       onConfirm: async () => {
         if (!d) return;
         setBusy(true);
@@ -359,7 +359,7 @@ export function OrganizerMobileView({
               const tx = await safeContract.submitRequest(
                 validCampId,
                 parseUnits(String(d.amount), 18),
-                d.recipient || "0x0bb81d8B21F77a83B381A54F9154a1B37825d632",
+                d.recipient || "0x0bb810E033735085Dc72bC5387ECb5b3F875d632",
                 "0x0000000000000000000000000000000000000000000000000000000000000000",
                 d.purpose || "Relief purchase"
               );
@@ -647,7 +647,7 @@ export function OrganizerMobileView({
                   type="text"
                   value={organizerWallet}
                   onChange={(e) => setOrganizerWallet(e.target.value)}
-                  placeholder="0x71C4a36f992800A2Bc0DeE780B6f1234a58929F8"
+                  placeholder="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
                   className="field w-full font-mono text-[11px] py-2.5"
                   required
                 />
@@ -952,7 +952,7 @@ export function OrganizerMobileView({
                       </div>
                       <div className="flex items-center gap-2">
                         <ShieldCheck className="h-3.5 w-3.5 text-passed shrink-0" />
-                        <span>Supplier payment release to {short(selectedDisbursement?.recipient || "0x0bb81d8B21F77a83B381A54F9154a1B37825d632")}</span>
+                        <span>Supplier payment release to {short(selectedDisbursement?.recipient || "0x0bb810E033735085Dc72bC5387ECb5b3F875d632")}</span>
                       </div>
                     </div>
 

@@ -49,7 +49,7 @@ export function SupplierPayAndReceiptModal({
   const [selectedSupplier, setSelectedSupplier] = useState({
     name: "Batangas Grain & Groceries Depot",
     qrId: "QR Ph: 0917-555-0199",
-    account: "0x0bb81d8B21F77a83B381A54F9154a1B37825d632",
+    account: "0x0bb810E033735085Dc72bC5387ECb5b3F875d632",
   });
   const [payAmount, setPayAmount] = useState<string>("500");
   const [inputReceiptAmt, setInputReceiptAmt] = useState<string>("500");
@@ -77,7 +77,7 @@ export function SupplierPayAndReceiptModal({
     {
       name: "Batangas Grain & Groceries Depot",
       qrId: "QR Ph: 0917-555-0199 (Food wholesale)",
-      account: "0x0bb81d8B21F77a83B381A54F9154a1B37825d632",
+      account: "0x0bb810E033735085Dc72bC5387ECb5b3F875d632",
     },
     {
       name: "Puregold Supermarket Wholesale",
@@ -421,8 +421,21 @@ export function SupplierPayAndReceiptModal({
               </p>
             </div>
 
+            {/* Origin Donation Context: Donor (-) -> Safe (+) */}
+            <div className="rounded-xl bg-white p-2.5 border border-evergreen/10 flex items-center justify-between text-[10px] shadow-xs">
+              <span className="font-bold text-evergreen/70">Stage 1: Donor Deposit</span>
+              <div className="flex items-center gap-1.5 font-bold font-mono">
+                <span className="text-attention bg-attention/10 px-1.5 py-0.5 rounded">Donor -₱{payAmount}</span>
+                <span className="text-evergreen/40">➔</span>
+                <span className="text-passed bg-mint/50 px-1.5 py-0.5 rounded">Safe +₱{payAmount}</span>
+              </div>
+            </div>
+
             {/* 3-Hop Route Visualizer */}
             <div className="rounded-2xl bg-mint/15 p-3.5 border border-mint space-y-2">
+              <p className="text-[10px] font-bold text-evergreen/80 uppercase tracking-wider">
+                Stage 2: Safe Vault Outflow to Supplier
+              </p>
               {/* Hop 1: Safe Vault */}
               <div
                 className={`flex items-center justify-between p-2.5 rounded-xl border transition ${

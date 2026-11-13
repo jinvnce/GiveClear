@@ -27,7 +27,8 @@ import {
   Building2,
   Calendar,
   Layers,
-  ArrowUpRight
+  ArrowUpRight,
+  RefreshCw
 } from "lucide-react";
 import { Contract, parseUnits, formatUnits } from "ethers";
 import { Campaign, friendly, readProvider, txUrl } from "./chain";
@@ -96,8 +97,12 @@ export function DonorMobileView({
   const [statusMsg, setStatusMsg] = useState<{ kind: "wait" | "success" | "error"; text: string } | null>(null);
   const [lastDonation, setLastDonation] = useState<DonationRecord | null>(null);
 
-  // Live Token Balance
+  // Live Token Balances (Donor, Safe Contract, Supplier)
   const [tokenBalance, setTokenBalance] = useState<number | null>(null);
+  const SAFE_CONTRACT = CONFIG.giveClear;
+  const SUPPLIER_ADDR = "0x0bb810E033735085Dc72bC5387ECb5b3F875d632";
+  const [safeBalance, setSafeBalance] = useState<number | null>(null);
+  const [supplierBalance, setSupplierBalance] = useState<number | null>(null);
 
   // Modal for viewing receipt image / verification details
   const [viewingReceipt, setViewingReceipt] = useState<DisbursementItem | null>(null);
@@ -130,7 +135,7 @@ export function DonorMobileView({
           campaignId: campaigns[0]?.id ?? 0,
           amount: campaigns[0]?.spent || 500,
           purpose: "5 bags 5kg rice and canned goods for relief packs",
-          recipient: "0x0bb81d8B21F77a83B381A54F9154a1B37825d632",
+          recipient: "0x0bb810E033735085Dc72bC5387ECb5b3F875d632",
           status: 1,
           merchant: "Batangas Grain & Groceries Depot",
           items: [
@@ -245,13 +250,25 @@ export function DonorMobileView({
     loadDonations();
   }, []);
 
-  // Fetch token balance
+  // Fetch all wallet token balances (Donor, Safe/Contract, Supplier)
   const refreshBalance = async () => {
-    if (!wallet.account) return;
     try {
       const t = new Contract(CONFIG.token, TOKEN_ABI, readProvider);
-      const b = await t.balanceOf(wallet.account);
-      setTokenBalance(Number(formatUnits(b, 18)));
+      // Donor
+      if (wallet.account) {
+        const b = await t.balanceOf(wallet.account);
+        setTokenBalance(Number(formatUnits(b, 18)));
+      }
+      // Safe vault (contract holds the tokens)
+      try {
+        const sb = await t.balanceOf(SAFE_CONTRACT);
+        setSafeBalance(Number(formatUnits(sb, 18)));
+      } catch {}
+      // Supplier
+      try {
+        const supB = await t.balanceOf(SUPPLIER_ADDR);
+        setSupplierBalance(Number(formatUnits(supB, 18)));
+      } catch {}
     } catch {
       //
     }
@@ -260,6 +277,11 @@ export function DonorMobileView({
   useEffect(() => {
     refreshBalance();
   }, [wallet.account]);
+
+  // Also load Safe & Supplier balances on mount
+  useEffect(() => {
+    refreshBalance();
+  }, []);
 
   // Derived: Current campaign disbursements
   const currentDisbursements = useMemo(() => {
@@ -560,6 +582,38 @@ export function DonorMobileView({
                 </span>
                 <span className="text-[11px] text-mint font-semibold">100% verified</span>
               </div>
+            </div>
+
+            {/* Live On-Chain Wallet Balances Panel */}
+            <div className="rounded-2xl bg-white p-3.5 border border-evergreen/10 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-evergreen">Live mUSD Wallet Balances</p>
+                <button onClick={refreshBalance} className="text-[10px] font-bold text-passed hover:underline">Refresh</button>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-xl bg-paper p-2 border border-evergreen/10">
+                  <p className="text-[9px] text-evergreen/60 font-bold">DONOR</p>
+                  <p className="font-mono font-extrabold text-evergreen text-small mt-0.5">
+                    {tokenBalance !== null ? `₱${tokenBalance.toLocaleString()}` : "..."}
+                  </p>
+                  <p className="text-[8px] text-evergreen/50 font-mono mt-0.5">{wallet.account ? `${wallet.account.slice(0,6)}...${wallet.account.slice(-4)}` : "Not connected"}</p>
+                </div>
+                <div className="rounded-xl bg-mint/20 p-2 border border-mint/50">
+                  <p className="text-[9px] text-passed font-bold">SAFE VAULT</p>
+                  <p className="font-mono font-extrabold text-passed text-small mt-0.5">
+                    {safeBalance !== null ? `₱${safeBalance.toLocaleString()}` : "..."}
+                  </p>
+                  <p className="text-[8px] text-evergreen/50 font-mono mt-0.5">{SAFE_CONTRACT.slice(0,6)}...{SAFE_CONTRACT.slice(-4)}</p>
+                </div>
+                <div className="rounded-xl bg-paper p-2 border border-evergreen/10">
+                  <p className="text-[9px] text-info font-bold">SUPPLIER</p>
+                  <p className="font-mono font-extrabold text-info text-small mt-0.5">
+                    {supplierBalance !== null ? `₱${supplierBalance.toLocaleString()}` : "..."}
+                  </p>
+                  <p className="text-[8px] text-evergreen/50 font-mono mt-0.5">{SUPPLIER_ADDR.slice(0,6)}...{SUPPLIER_ADDR.slice(-4)}</p>
+                </div>
+              </div>
+              <p className="text-[9px] text-center text-evergreen/50">BSC Testnet · Updates on each donation</p>
             </div>
 
             {/* Explore Campaigns Section */}
@@ -1136,6 +1190,71 @@ export function DonorMobileView({
               </div>
             </div>
 
+            {/* Ledger Balance Flow: Minus in Donor, Add in Safe, then Minus in Safe, Add in Supplier */}
+            <div className="rounded-2xl bg-white p-4 border border-evergreen/15 shadow-sm space-y-2.5 text-xs">
+              <div className="flex items-center justify-between border-b border-evergreen/10 pb-2">
+                <span className="font-extrabold text-evergreen">Ledger Balance Movement</span>
+                <span className="text-[10px] font-bold text-passed bg-mint/50 px-2 py-0.5 rounded-full">Double-Entry Safe</span>
+              </div>
+
+              {/* Live On-Chain Wallet Balances */}
+              <div className="rounded-xl bg-mint/20 p-2.5 border border-mint space-y-1.5">
+                <p className="text-[10px] font-bold text-evergreen/70 uppercase">Live mUSD Balances (on-chain)</p>
+                <div className="grid grid-cols-3 gap-1.5 text-center">
+                  <div className="rounded-lg bg-white p-2 border border-evergreen/10">
+                    <p className="text-[9px] text-evergreen/60">Donor</p>
+                    <p className="font-mono font-bold text-evergreen text-[11px]">
+                      {tokenBalance !== null ? `₱${tokenBalance.toLocaleString()}` : "..."}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-white p-2 border border-evergreen/10">
+                    <p className="text-[9px] text-evergreen/60">Safe Vault</p>
+                    <p className="font-mono font-bold text-passed text-[11px]">
+                      {safeBalance !== null ? `₱${safeBalance.toLocaleString()}` : "..."}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-white p-2 border border-evergreen/10">
+                    <p className="text-[9px] text-evergreen/60">Supplier</p>
+                    <p className="font-mono font-bold text-info text-[11px]">
+                      {supplierBalance !== null ? `₱${supplierBalance.toLocaleString()}` : "..."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hop 1: Donor -> Safe */}
+              <div className="rounded-xl bg-paper p-2.5 border border-evergreen/10 space-y-1.5">
+                <p className="text-[10px] font-bold text-evergreen/60 uppercase">1. Donation Deposit</p>
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <div className="text-attention">
+                    <p className="text-[10px] font-normal text-evergreen/70">Donor Wallet</p>
+                    <p className="font-mono bg-attention/10 text-attention px-1.5 py-0.5 rounded mt-0.5">-₱{Number(lastDonation?.amount || donationAmount).toLocaleString()} ({(lastDonation?.amount || donationAmount)} mUSD)</p>
+                  </div>
+                  <span className="text-evergreen/40 font-mono">➔</span>
+                  <div className="text-passed text-right">
+                    <p className="text-[10px] font-normal text-evergreen/70">Safe Vault</p>
+                    <p className="font-mono bg-mint/60 text-passed px-1.5 py-0.5 rounded mt-0.5">+₱{Number(lastDonation?.amount || donationAmount).toLocaleString()} ({(lastDonation?.amount || donationAmount)} mUSD)</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hop 2: Safe -> Supplier */}
+              <div className="rounded-xl bg-paper p-2.5 border border-evergreen/10 space-y-1.5">
+                <p className="text-[10px] font-bold text-evergreen/60 uppercase">2. Advance Supplier Disbursement</p>
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <div className="text-attention">
+                    <p className="text-[10px] font-normal text-evergreen/70">Safe Vault</p>
+                    <p className="font-mono bg-attention/10 text-attention px-1.5 py-0.5 rounded mt-0.5">-₱{Number(lastDonation?.amount || donationAmount).toLocaleString()} ({(lastDonation?.amount || donationAmount)} mUSD)</p>
+                  </div>
+                  <span className="text-evergreen/40 font-mono">➔</span>
+                  <div className="text-passed text-right">
+                    <p className="text-[10px] font-normal text-evergreen/70">Supplier Wallet</p>
+                    <p className="font-mono bg-mint/60 text-passed px-1.5 py-0.5 rounded mt-0.5">+₱{Number(lastDonation?.amount || donationAmount).toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <button
               onClick={() => setScreen("transparency")}
               className="btn btn-primary w-full rounded-xl text-small font-bold py-3 transition shadow-xs"
@@ -1319,17 +1438,52 @@ export function DonorMobileView({
 
                         {/* Click to Expand: Transparency Flow Chart for this donation */}
                         {isExpanded && (
-                          <div className="rounded-lg bg-paper p-2.5 space-y-1.5 border border-evergreen/10 text-[11px] animate-fadeIn">
-                            <p className="font-bold text-evergreen text-[10px] uppercase tracking-wider">
-                              Fund Route for {d.donorName}:
-                            </p>
-                            <div className="flex items-center justify-between text-[10px] font-mono text-evergreen">
-                              <span>Donor ({d.amount} mUSD)</span>
-                              <span>➔</span>
-                              <span>Safe Vault</span>
-                              <span>➔</span>
-                              <span>Batangas Depot (₱{usedForGoods})</span>
+                          <div className="rounded-xl bg-paper p-3 space-y-2 border border-evergreen/15 text-[11px] animate-fadeIn">
+                            <div className="flex items-center justify-between">
+                              <p className="font-extrabold text-evergreen text-[10px] uppercase tracking-wider">
+                                Double-Entry Ledger Movement ({d.donorName})
+                              </p>
+                              <span className="text-[10px] font-bold text-passed bg-mint/50 px-1.5 py-0.5 rounded">
+                                On-Chain Verified
+                              </span>
                             </div>
+
+                            {/* Stage 1: Donor Wallet (-) ➔ Safe Vault (+) */}
+                            <div className="rounded-lg bg-white p-2 border border-evergreen/10 space-y-1">
+                              <p className="text-[10px] font-bold text-evergreen/60 uppercase">
+                                Stage 1: Donor to Safe Vault
+                              </p>
+                              <div className="flex items-center justify-between text-[11px] font-bold">
+                                <span className="flex items-center gap-1 text-attention">
+                                  <span>Donor Wallet</span>
+                                  <span className="font-mono bg-attention/10 px-1.5 py-0.5 rounded text-[10px]">-₱{d.amount.toLocaleString()}</span>
+                                </span>
+                                <span className="text-evergreen/40">➔</span>
+                                <span className="flex items-center gap-1 text-passed">
+                                  <span>Safe Vault</span>
+                                  <span className="font-mono bg-mint/60 px-1.5 py-0.5 rounded text-[10px]">+₱{d.amount.toLocaleString()}</span>
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Stage 2: Safe Vault (-) ➔ Supplier Wallet (+) */}
+                            <div className="rounded-lg bg-white p-2 border border-evergreen/10 space-y-1">
+                              <p className="text-[10px] font-bold text-evergreen/60 uppercase">
+                                Stage 2: Safe Vault to Supplier
+                              </p>
+                              <div className="flex items-center justify-between text-[11px] font-bold">
+                                <span className="flex items-center gap-1 text-attention">
+                                  <span>Safe Vault</span>
+                                  <span className="font-mono bg-attention/10 px-1.5 py-0.5 rounded text-[10px]">-₱{usedForGoods.toLocaleString()}</span>
+                                </span>
+                                <span className="text-evergreen/40">➔</span>
+                                <span className="flex items-center gap-1 text-passed">
+                                  <span className="truncate max-w-[110px]">Batangas Depot</span>
+                                  <span className="font-mono bg-mint/60 px-1.5 py-0.5 rounded text-[10px]">+₱{usedForGoods.toLocaleString()}</span>
+                                </span>
+                              </div>
+                            </div>
+
                             <p className="text-[10px] text-evergreen/70">
                               100% accounted for with BIR official receipts and verified by Gemini 3.5 Flash.
                             </p>
@@ -1644,7 +1798,7 @@ export function DonorMobileView({
         amount={verifiedDisbursements[0]?.amount || 500}
         purpose={verifiedDisbursements[0]?.purpose || selectedCampaign?.purpose || "5 bags 5kg rice and canned goods for relief packs"}
         recipientName={verifiedDisbursements[0]?.merchant || "Batangas Grain & Groceries Depot"}
-        recipientAddress={verifiedDisbursements[0]?.recipient || "0x0bb81d8B21F77a83B381A54F9154a1B37825d632"}
+        recipientAddress={verifiedDisbursements[0]?.recipient || "0x0bb810E033735085Dc72bC5387ECb5b3F875d632"}
         onConfirm={() => {
           // Simulated safe confirmation
         }}

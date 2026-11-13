@@ -117,7 +117,7 @@ const disbursements: Disbursement[] = [
     campaignId: 0,
     amount: 500,
     purpose: "5 bags 5kg rice and canned goods for relief packs",
-    recipient: "0x0bb81d8B21F77a83B381A54F9154a1B37825d632",
+    recipient: "0x0bb810E033735085Dc72bC5387ECb5b3F875d632",
     status: 1,
     merchant: "Batangas Grain & Groceries Depot",
     items: [
@@ -261,7 +261,9 @@ app.post("/api/donate-qr", async (req, res) => {
     // If backend approver has balance on-chain, attempt on-chain safe deposit
     try {
       const val = parseUnits(String(amtNumber), 18);
-      const tx = await giveClear.donate(BigInt(campaignId), val);
+      const count: bigint = await giveClear.campaignCount();
+      const validCampId = count > 0n ? BigInt(campaignId) % count : 0n;
+      const tx = await giveClear.donate(validCampId, val);
       const receipt = await tx.wait();
       txHash = receipt.hash;
     } catch (e: any) {
@@ -475,7 +477,7 @@ app.post("/api/disburse", (req, res) => {
       campaignId: Number(campaignId),
       amount: Number(amount),
       purpose: String(purpose).trim(),
-      recipient: String(recipient || "0x0bb81d8B21F77a83B381A54F9154a1B37825d632").trim(),
+      recipient: String(recipient || "0x0bb810E033735085Dc72bC5387ECb5b3F875d632").trim(),
       status: 0, // Awaiting receipt
       note: "Funds disbursed to organizer for relief operations. Pending receipt liquidation.",
       createdAt: new Date().toLocaleDateString("en-PH"),

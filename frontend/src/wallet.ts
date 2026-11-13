@@ -12,6 +12,25 @@ export type WalletState = {
 
 const eth = () => (window as any).ethereum;
 
+/** Ask MetaMask to display the mUSD token so balance changes are visible */
+async function watchMuSDToken() {
+  try {
+    await eth()?.request({
+      method: "wallet_watchAsset",
+      params: {
+        type: "ERC20",
+        options: {
+          address: CONFIG.token,
+          symbol: "mUSD",
+          decimals: 18,
+        },
+      },
+    });
+  } catch {
+    // user declined or unsupported — ignore
+  }
+}
+
 export function useWallet(): WalletState {
   const [account, setAccount] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -47,8 +66,12 @@ export function useWallet(): WalletState {
         });
       }
       const signer = await new BrowserProvider(eth()).getSigner();
-      setAccount(await signer.getAddress());
+      const addr = await signer.getAddress();
+      setAccount(addr);
       setError("");
+
+      // Auto-import mUSD token into MetaMask so the user sees balance changes
+      watchMuSDToken();
     } catch (e) {
       setError(friendly(e));
     }
@@ -56,7 +79,17 @@ export function useWallet(): WalletState {
 
   useEffect(() => {
     const e = eth();
-    if (!e?.on) return;
+    if (!e) return;
+    e.request({ method: "eth_accounts" })
+      .then((accs: string[]) => {
+        if (accs && accs[0]) {
+          setAccount(accs[0]);
+          // Also import mUSD token if already connected
+          watchMuSDToken();
+        }
+      })
+      .catch(() => {});
+    if (!e.on) return;
     const onChange = (accs: string[]) => setAccount(accs[0] ?? null);
     e.on("accountsChanged", onChange);
     return () => e.removeListener?.("accountsChanged", onChange);

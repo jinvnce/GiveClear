@@ -34,7 +34,7 @@ export function SafeWalletConfirmationModal({
   campaignName,
   amount,
   recipientName = "Batangas Grain & Groceries Depot",
-  recipientAddress = "0x0bb81d8B21F77a83B381A54F9154a1B37825d632",
+  recipientAddress = "0x0bb810E033735085Dc72bC5387ECb5b3F875d632",
   purpose = "5 bags 5kg rice and canned goods for relief packs",
   onConfirm,
   onClose,
@@ -122,11 +122,21 @@ export function SafeWalletConfirmationModal({
                 </p>
               </div>
 
+              {/* Origin Stage 1: Donor (-) -> Safe (+) */}
+              <div className="rounded-xl bg-paper p-2.5 border border-evergreen/10 flex items-center justify-between text-[10px] shadow-xs">
+                <span className="font-bold text-evergreen/70">Stage 1: Donor Deposit</span>
+                <div className="flex items-center gap-1.5 font-bold font-mono">
+                  <span className="text-attention bg-attention/10 px-1.5 py-0.5 rounded">Donor -₱{amount.toLocaleString()}</span>
+                  <span className="text-evergreen/40">➔</span>
+                  <span className="text-passed bg-mint/50 px-1.5 py-0.5 rounded">Safe +₱{amount.toLocaleString()}</span>
+                </div>
+              </div>
+
               {/* 3-Hop Transfer Path: Safe -> 3rd Party Gateway -> Supplier */}
               <div className="rounded-2xl bg-mint/15 p-3.5 border border-mint space-y-2 text-xs">
                 <p className="text-[11px] font-bold text-evergreen flex items-center gap-1.5">
                   <RefreshCw className="h-3.5 w-3.5 text-passed" />
-                  Transfer Route (Safe ➔ 3rd Party ➔ Supplier)
+                  Stage 2: Safe Vault Outflow (Safe ➔ 3rd Party ➔ Supplier)
                 </p>
 
                 {/* Step A: Safe */}
